@@ -1,31 +1,31 @@
 import { getClient } from "@/lib/client";
-
 import { gql } from "@apollo/client";
 import SearchForm from "./components/search-form";
 import { Suspense } from 'react';
+import PokemonList from "./components/pokemon-list";
 
-interface Pokemon {
-  id: number;
-  name: string;
-  pokemon_v2_pokemonsprites: any[]
-}
-export default async function Search({
-  searchParams,
-}: {
-  searchParams?: {
-    s?: string;
-    page?: string;
-  };
-}) {
-  const s = searchParams?.s || '';
-  const currentPage = Number(searchParams?.page) || 1;
+export default async function Search() {
   const query = gql`query samplePokeAPIquery {
-    pokemon_v2_pokemon(where: {name: {_like: "%${s}%"}}) {
+    pokemon_v2_pokemon(where: {}) {
       pokemon_v2_pokemonsprites(where: {}, limit: 1) {
-        sprites
+        sprites(path: "other.home.front_default")
       }
       id
       name
+      pokemon_v2_pokemonspecy {
+        is_mythical
+        is_legendary
+        is_baby
+      }
+      pokemon_v2_pokemontypes {
+        pokemon_v2_type {
+          name
+        }
+        slot
+        pokemon_v2_pokemon {
+          id
+        }
+      }
     }
   }`;
   const { data, error } = await getClient().query({ query });
@@ -34,17 +34,7 @@ export default async function Search({
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <SearchForm></SearchForm>
       <Suspense fallback={<div></div>}>
-        {
-          data.pokemon_v2_pokemon.map((pokemon_v2: Pokemon) => (
-            <div className="pokemon border-2 rounded-sm border-sky-500 mb-2 w-96 h-64" key={pokemon_v2.id}>
-              <h1>{pokemon_v2.id}</h1>
-              <h1>{pokemon_v2.name}</h1>
-              {pokemon_v2.pokemon_v2_pokemonsprites.map((sprites) => (
-                <img src={sprites.sprites.other.home.front_default} className="h-48" key={pokemon_v2.id} />
-              ))}
-            </div>
-          ))
-        }
+        <PokemonList pokemonList={data}></PokemonList>
       </Suspense>
     </main>
   );
